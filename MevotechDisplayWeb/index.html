@@ -1,0 +1,1260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Mevotech Display</title>
+<meta name="theme-color" content="#0B1628">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<script src="config.js"></script>
+<script src="lib/pdf.min.js"></script>
+<style>
+@font-face { font-family: "Barlow Condensed"; src: url(fonts/BarlowCondensed-Medium.ttf); font-weight: 500; }
+@font-face { font-family: "Barlow Condensed"; src: url(fonts/BarlowCondensed-SemiBold.ttf); font-weight: 600; }
+@font-face { font-family: "Barlow"; src: url(fonts/Barlow-Regular.ttf); font-weight: 400; }
+@font-face { font-family: "Barlow"; src: url(fonts/Barlow-Medium.ttf); font-weight: 500; }
+
+:root {
+  --graphite: #0B1628;
+  --forged: #12223B;
+  --forged-hi: #1A2E4D;
+  --steel: #8EA2BF;
+  --chalk: #EEF3FA;
+  --signal: #0072BB;
+  --signal-hi: #3D9BE0;
+  --line: rgba(142, 162, 191, .2);
+  --line-hi: rgba(238, 243, 250, .34);
+  --display: "Barlow Condensed", "sans-serif-condensed", "Roboto Condensed", sans-serif;
+  --body: "Barlow", "Roboto", system-ui, sans-serif;
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --ease-io: cubic-bezier(.65, 0, .35, 1);
+}
+
+/* rem follows the screen, so the layout holds at 1080p or 4K */
+html { font-size: 1.5vmin; }
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  background: var(--graphite); color: var(--chalk);
+  font-family: var(--body); font-weight: 400;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; touch-action: manipulation; }
+button:focus-visible { outline: .3rem solid var(--signal); outline-offset: .3rem; }
+svg { display: block; }
+
+/* ================= Menu (portrait first) ================= */
+.home {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  padding: 5rem 5.5rem 4.5rem;
+  background:
+    radial-gradient(ellipse 90% 45% at 50% 24%, #163058 0%, rgba(11,22,40,0) 70%),
+    var(--graphite);
+}
+.topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; position: relative; z-index: 2; }
+.wordmark { padding: .6rem 0; }
+.wordmark img { display: block; height: 5rem; width: auto; pointer-events: none; -webkit-user-drag: none; }
+.clock { text-align: right; }
+.clock .time { font-family: var(--display); font-weight: 500; font-size: 4.6rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.clock .date { color: var(--steel); font-size: 1.6rem; margin-top: .6rem; }
+
+/* Hero: a front suspension corner, built from the parts Mevotech makes */
+.hero { position: relative; flex: 0 0 auto; display: flex; flex-direction: column; align-items: stretch; margin: .8rem -5.5rem 0; }
+#scene { width: 100%; height: 27vh; touch-action: none; overflow: hidden; display: block; transition: height .8s var(--ease-out); }
+.caption { padding: 0 5.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.cap-text { min-height: 9.6rem; }
+.cap-foot { display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
+.cap-name { font-family: var(--display); font-weight: 600; font-size: 4.2rem; line-height: 1; }
+.cap-desc { color: var(--steel); font-size: 1.75rem; line-height: 1.4; margin-top: .6rem; max-width: 40ch; }
+.segs { display: flex; gap: .6rem; }
+.segs button { width: 4.6rem; height: 4rem; display: grid; align-items: center; }
+.segs button i { display: block; height: .5rem; border-radius: 1rem; background: var(--line); overflow: hidden; }
+.segs button i::after { content: ""; display: block; height: 100%; width: 0; background: var(--signal-hi); }
+.segs button.on i::after { animation: segfill var(--cycle, 4.5s) linear forwards; }
+.segs.hold button.on i::after { animation: none; width: 100%; }
+@keyframes segfill { to { width: 100%; } }
+.cap-hint { color: var(--steel); font-size: 1.45rem; opacity: .85; text-align: right; }
+
+#scene .chassis { fill: rgba(142,162,191,.05); stroke: var(--steel); stroke-width: .8; stroke-dasharray: 3 3; }
+#scene .road { fill: rgba(142,162,191,.07); }
+#scene .roadedge { stroke: var(--steel); stroke-width: .8; }
+#scene .dash { stroke: var(--steel); stroke-width: 1.6; stroke-dasharray: 16 14; opacity: .55; }
+#scene .solid { fill: var(--forged-hi); stroke: var(--chalk); stroke-width: 1.1; stroke-linejoin: round; }
+#scene .thin { fill: none; stroke: var(--steel); stroke-width: .9; stroke-linecap: round; stroke-linejoin: round; }
+#scene .rod { fill: none; stroke: var(--chalk); stroke-width: 3.2; stroke-linecap: round; }
+#scene .tire { fill: #0C1A30; stroke: var(--chalk); stroke-width: 1.2; }
+#scene .rim { fill: none; stroke: var(--steel); stroke-width: .8; }
+#scene .tread line { stroke: var(--steel); stroke-width: 2.4; stroke-linecap: round; opacity: .5; }
+#scene .hit { fill: transparent; stroke: transparent; stroke-width: 16; pointer-events: all; }
+#scene .part { cursor: pointer; transition: opacity .5s; }
+#scene.focus .part:not(.sel), #scene.focus .neutral { opacity: .35; }
+#scene .part.sel .solid { stroke: var(--signal-hi); fill: rgba(0,114,187,.32); }
+#scene .part.sel .thin { stroke: var(--signal-hi); }
+#scene .part.sel .rod { stroke: var(--signal-hi); }
+#scene .neutral { transition: opacity .5s; }
+#scene .ring { fill: none; stroke: var(--signal-hi); stroke-width: 1.2; transform-box: fill-box; transform-origin: center; animation: ring 1.8s var(--ease-out) infinite; }
+@keyframes ring { from { transform: scale(.55); opacity: 1; } to { transform: scale(1.7); opacity: 0; } }
+
+/* Choices */
+.tiles { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 1.6rem; padding-top: 2rem; perspective: 140rem; }
+.tile {
+  --x: 50%; --y: 50%; --rx: 0deg; --ry: 0deg; --glow: 0;
+  position: relative; overflow: hidden; isolation: isolate;
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 3rem;
+  width: 100%; flex: 1 1 0; min-height: 0; max-height: 26rem;
+  padding: 1.8rem 3.6rem 1.8rem 4.2rem;
+  text-align: left;
+  background: var(--forged);
+  border: 1px solid var(--line); border-radius: 1.6rem;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform .6s var(--ease-out), border-color .3s;
+  will-change: transform;
+}
+/* light that follows the finger */
+.tile::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(38rem circle at var(--x) var(--y), rgba(61,155,224,.16), transparent 60%);
+  opacity: var(--glow); transition: opacity .5s;
+}
+/* red edge marks the active choice */
+.tile::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: .6rem; z-index: 1;
+  background: var(--signal); transform: scaleY(0);
+  transition: transform .5s var(--ease-out);
+}
+.tile.held { border-color: var(--line-hi); transition: transform .18s var(--ease-out), border-color .2s; }
+.tile.held::before, .tile.pressed::before { transform: scaleY(1); }
+.tile .sweep {
+  position: absolute; inset: -20% auto -20% 0; width: 30%; z-index: -1; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(61,155,224,.12), transparent);
+  transform: translateX(-120%) skewX(-12deg);
+}
+.tile .ripple {
+  position: absolute; z-index: -1; pointer-events: none; border-radius: 50%;
+  width: 2rem; height: 2rem; margin: -1rem 0 0 -1rem;
+  background: rgba(0,114,187,.32);
+}
+.tile h2 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 5.6rem; line-height: .95; letter-spacing: -.005em; }
+.tile p { margin: .8rem 0 0; color: var(--steel); font-size: 1.8rem; line-height: 1.4; max-width: 36ch; }
+.titlerow { display: flex; align-items: center; gap: 1.6rem; flex-wrap: wrap; }
+.count {
+  font-family: var(--display); font-weight: 500; font-size: 1.9rem;
+  padding: .3rem 1.3rem; border: 1px solid var(--line-hi); border-radius: 99rem;
+}
+.count:empty { display: none; }
+.side { display: flex; flex-direction: column; align-items: center; gap: 1.6rem; }
+.glyph { width: 9rem; height: 9rem; fill: none; stroke: var(--chalk); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.glyph .accent { stroke: var(--signal); }
+.go {
+  width: 5.4rem; height: 5.4rem; border-radius: 50%; border: 1px solid var(--line-hi);
+  display: grid; place-items: center; transition: background-color .3s, border-color .3s, transform .5s var(--ease-out);
+}
+.go svg { width: 2.2rem; height: 2.2rem; fill: none; stroke: var(--chalk); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.tile.held .go, .tile.pressed .go { background: var(--signal); border-color: var(--signal); transform: translateX(.6rem); }
+
+.hint { margin: 2rem 0 0; font-size: 1.6rem; line-height: 1.45; color: var(--steel); text-align: center; }
+.hint strong { color: var(--chalk); font-weight: 500; }
+
+/* Landscape fallback */
+@media (orientation: landscape) {
+  .home { display: grid; grid-template-columns: 44% 1fr; grid-template-rows: auto 1fr auto; column-gap: 3rem; padding: 4.5rem 5.5rem; }
+  .topbar { grid-column: 2; grid-row: 1; }
+  .hero { grid-column: 1; grid-row: 1 / 4; margin: 0; justify-content: center; }
+  #bearing { width: min(42vw, 82vh); height: min(42vw, 82vh); }
+  .rpm { display: none; }
+  .tiles { grid-column: 2; grid-row: 2; }
+  .hint { grid-column: 2; grid-row: 3; text-align: left; }
+  .tile h2 { font-size: 5.2rem; }
+  .glyph { width: 8.5rem; height: 8.5rem; }
+}
+
+/* ================= Launch panel ================= */
+#launch { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; background: var(--forged); }
+#launch.show { display: flex; }
+#launch .stack { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2.8rem; padding: 0 6rem; }
+#launch .glyph { width: 16rem; height: 16rem; }
+#launch h2 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 9rem; line-height: .92; max-width: 16ch; }
+#launch .sub { color: var(--steel); font-size: 2rem; }
+#launch .track { width: 36rem; height: .4rem; background: var(--line); overflow: hidden; border-radius: 1rem; }
+#launch .track i { display: block; height: 100%; width: 40%; background: var(--signal); transform: translateX(-100%); }
+#launch.loading .track i { animation: sweep 1.1s var(--ease-io) infinite; }
+@keyframes sweep { to { transform: translateX(260%); } }
+
+/* ================= Media library ================= */
+#library {
+  position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column;
+  background: var(--graphite);
+  transform: translateY(100%); visibility: hidden;
+  transition: transform .75s var(--ease-out), visibility 0s linear .75s;
+}
+#library.open { transform: none; visibility: visible; transition: transform .75s var(--ease-out), visibility 0s; }
+.lib-head { padding: 5rem 5.5rem 2.6rem; border-bottom: 1px solid var(--line); display: grid; gap: 2.6rem; }
+.lib-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem 3rem; flex-wrap: wrap; }
+.pill {
+  display: inline-flex; align-items: center; gap: 1.3rem;
+  height: 7rem; padding: 0 3rem 0 1.1rem;
+  background: var(--forged); border: 1px solid var(--line); border-radius: 99rem;
+  font-size: 2rem; font-weight: 500;
+}
+.pill .dot { width: 5rem; height: 5rem; border-radius: 50%; background: var(--signal); display: grid; place-items: center; }
+.pill .dot svg { width: 2.4rem; height: 2.4rem; fill: none; stroke: var(--chalk); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.pill:active { background: var(--forged-hi); }
+.lib-title h1 { white-space: nowrap; margin: 0; font-family: var(--display); font-weight: 600; font-size: 6.4rem; line-height: 1; }
+.lib-title div { color: var(--steel); font-size: 1.7rem; margin-top: .6rem; }
+.seg { position: relative; display: inline-flex; padding: .5rem; background: var(--forged); border: 1px solid var(--line); border-radius: 99rem; }
+.seg .knob { position: absolute; top: .5rem; bottom: .5rem; left: 0; width: 0; border-radius: 99rem; background: var(--chalk); transition: transform .5s var(--ease-out), width .5s var(--ease-out); }
+.seg button { position: relative; height: 5.6rem; padding: 0 3rem; border-radius: 99rem; font-size: 1.8rem; color: var(--steel); transition: color .3s; }
+.seg button.on { color: var(--graphite); font-weight: 500; }
+.icon-btn { width: 7rem; height: 7rem; border-radius: 50%; background: var(--forged); border: 1px solid var(--line); display: grid; place-items: center; flex: none; }
+.icon-btn svg { width: 2.8rem; height: 2.8rem; fill: none; stroke: var(--chalk); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.icon-btn:active { background: var(--forged-hi); }
+.icon-btn.spin svg { animation: turn .8s var(--ease-io); }
+@keyframes turn { to { transform: rotate(360deg); } }
+
+.lib-body { flex: 1; overflow-y: auto; padding: 3rem 5.5rem 6rem; -webkit-overflow-scrolling: touch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(26rem, 1fr)); gap: 2.4rem; }
+.folder-label { grid-column: 1 / -1; font-family: var(--display); font-weight: 500; font-size: 2.4rem; color: var(--steel); padding-top: 1.4rem; border-top: 1px solid var(--line); margin-top: 1rem; }
+.folder-label:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
+.card {
+  display: flex; flex-direction: column; text-align: left;
+  background: var(--forged); border: 1px solid var(--line); border-radius: 1rem; overflow: hidden;
+  transition: transform .45s var(--ease-out), border-color .25s;
+}
+.card:active { transform: scale(.97); border-color: var(--line-hi); }
+.thumb { position: relative; aspect-ratio: 4 / 3; background: #08121F center / cover no-repeat; overflow: hidden; }
+.card.pdf .thumb { background-size: contain; background-color: #1C3150; }
+.thumb .badge { position: absolute; left: 1.2rem; top: 1.2rem; padding: .5rem 1.2rem; border-radius: 99rem; background: rgba(11,22,40,.85); font-size: 1.4rem; font-weight: 500; }
+.thumb .play {
+  position: absolute; left: 50%; top: 50%; width: 8rem; height: 8rem; margin: -4rem 0 0 -4rem;
+  border-radius: 50%; background: rgba(11,22,40,.72); border: 1px solid rgba(238,241,243,.4);
+  display: grid; place-items: center; transition: transform .45s var(--ease-out), background-color .3s;
+}
+.card:active .play { transform: scale(1.12); background: var(--signal); }
+.thumb .play svg { width: 3rem; height: 3rem; fill: var(--chalk); margin-left: .4rem; }
+.thumb .blank { position: absolute; inset: 0; display: grid; place-items: center; }
+.thumb .blank svg { width: 8rem; height: 8rem; fill: none; stroke: var(--steel); stroke-width: 1.4; }
+.card .info { padding: 1.8rem 2rem 2.1rem; }
+.card .name { font-family: var(--display); font-weight: 600; font-size: 2.8rem; line-height: 1.05; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card .sub { color: var(--steel); font-size: 1.5rem; margin-top: .6rem; }
+
+.empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 2.2rem; padding: 4rem; }
+.empty h2 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 5rem; }
+.empty p { margin: 0; color: var(--steel); font-size: 1.9rem; line-height: 1.5; max-width: 42ch; }
+.btn { height: 7rem; padding: 0 3.4rem; border-radius: 99rem; background: var(--signal); color: #fff; font-size: 1.9rem; font-weight: 500; }
+.btn.ghost { background: var(--forged); border: 1px solid var(--line); color: var(--chalk); }
+.btn:active { filter: brightness(1.12); }
+
+/* ================= Settings ================= */
+#admin { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; background: rgba(5, 11, 22, .82); }
+#admin.show { display: flex; }
+.sheet { width: min(68rem, 90vw); background: var(--forged); border: 1px solid var(--line); border-radius: 1.8rem; padding: 4rem 4.2rem; animation: rise .55s var(--ease-out); }
+@keyframes rise { from { opacity: 0; transform: translateY(4rem); } }
+.sheet h2 { margin: 0 0 .6rem; font-family: var(--display); font-weight: 600; font-size: 4.4rem; }
+.sheet .lead { color: var(--steel); font-size: 1.7rem; margin: 0 0 2.8rem; }
+.dots { display: flex; gap: 1.8rem; justify-content: center; margin: 1rem 0 3.2rem; }
+.dots i { width: 2rem; height: 2rem; border-radius: 50%; border: 2px solid var(--steel); transition: background-color .15s, border-color .15s; }
+.dots i.on { background: var(--chalk); border-color: var(--chalk); }
+.dots.bad { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-1.2rem); } 40%, 80% { transform: translateX(1.2rem); } }
+.keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4rem; }
+.keys button { height: 9rem; border-radius: 1.1rem; background: var(--forged-hi); font-family: var(--display); font-weight: 500; font-size: 3.6rem; }
+.keys button:active { background: #22395E; }
+.keys .muted { font-family: var(--body); font-size: 1.8rem; color: var(--steel); }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 2.2rem 0; border-top: 1px solid var(--line); }
+.row .k { font-size: 2rem; font-weight: 500; }
+.row .v { color: var(--steel); font-size: 1.6rem; margin-top: .4rem; }
+.switch { width: 9.6rem; height: 5.4rem; border-radius: 99rem; background: var(--forged-hi); border: 1px solid var(--line); position: relative; transition: background-color .25s; flex: none; }
+.switch::after { content: ""; position: absolute; top: .55rem; left: .55rem; width: 4.1rem; height: 4.1rem; border-radius: 50%; background: var(--steel); transition: transform .4s var(--ease-out), background-color .25s; }
+.switch.on { background: var(--signal); }
+.switch.on::after { transform: translateX(4.2rem); background: #fff; }
+.sheet .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 2.6rem; color: var(--steel); font-size: 1.5rem; }
+
+#toast {
+  position: fixed; left: 50%; bottom: 6rem; z-index: 80; transform: translate(-50%, 2rem); opacity: 0;
+  padding: 1.8rem 3rem; border-radius: 99rem; background: var(--chalk); color: var(--graphite);
+  font-size: 1.8rem; font-weight: 500; transition: opacity .3s, transform .5s var(--ease-out); pointer-events: none;
+  max-width: 90vw; text-align: center;
+}
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+
+/* ================= Customer welcome: a full-screen page, closed like a PDF ================= */
+#greet {
+  position: fixed; inset: 0; z-index: 55; overflow: hidden;
+  display: none; flex-direction: column; align-items: center;
+  background:
+    radial-gradient(ellipse 85% 55% at 50% 44%, #12345F 0%, rgba(11,22,40,0) 70%),
+    var(--graphite);
+  padding: 13rem 6rem 6rem;  /* room for Close above the logo */
+}
+#greet.show { display: flex; }
+#greet .arcs { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#greet .arcs g { transform-origin: 50px 76px; }
+#greet .a1 { animation: spin 70s linear infinite; }
+#greet .a2 { animation: spin 110s linear infinite reverse; }
+#greet .a3 { animation: spin 160s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#greet .arcs circle { fill: none; }
+.g-mevo { position: relative; height: 5.4rem; width: auto; display: block; }
+.g-body { position: relative; flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.g-hi { font-family: var(--display); font-weight: 500; font-size: 4.4rem; color: var(--signal-hi); letter-spacing: .02em; }
+.g-plate {
+  margin: 3.6rem 0 4rem; width: min(78%, 62rem); height: 30vh;
+  background: #fff; border-radius: 2.4rem; padding: 4rem 5rem;
+  display: grid; place-items: center;
+  box-shadow: 0 3rem 8rem -2rem rgba(0,0,0,.55), 0 0 0 .1rem rgba(255,255,255,.5);
+}
+.g-plate img { max-width: 100%; max-height: 100%; width: auto; height: auto; display: block; object-fit: contain; }
+.g-plate .initials { font-family: var(--display); font-weight: 600; font-size: 16rem; color: var(--graphite); line-height: 1; }
+.g-name { font-family: var(--display); font-weight: 600; font-size: 9.6rem; line-height: .92; max-width: 15ch; overflow-wrap: break-word; }
+.g-rule { width: 9rem; height: .5rem; background: var(--signal); border-radius: 1rem; margin: 3.4rem 0 2.6rem; }
+.g-sub { color: var(--steel); font-size: 2.2rem; }
+.g-foot { position: relative; display: flex; align-items: baseline; gap: 2rem; color: var(--steel); font-size: 1.9rem; }
+.g-foot b { font-family: var(--display); font-weight: 500; font-size: 3.4rem; color: var(--chalk); font-variant-numeric: tabular-nums; }
+.g-close {
+  position: absolute; top: 3.6rem; left: 3.6rem; z-index: 2;
+  display: inline-flex; align-items: center; gap: 1.4rem;
+  height: 7.6rem; padding: 0 3rem 0 1.2rem; border-radius: 99rem;
+  background: rgba(18, 34, 59, .86); border: 1px solid rgba(255,255,255,.18);
+  font-size: 2.2rem; font-weight: 500;
+  opacity: 0; visibility: hidden; transform: translateY(-1.5rem);
+  transition: opacity .25s, transform .4s var(--ease-out), visibility 0s linear .4s;
+}
+.g-close .dot { width: 5.4rem; height: 5.4rem; border-radius: 50%; background: var(--signal); display: grid; place-items: center; }
+.g-close svg { width: 2.6rem; height: 2.6rem; fill: var(--chalk); }
+#greet.chrome .g-close { opacity: 1; visibility: visible; transform: none; transition: opacity .2s, transform .4s var(--ease-out), visibility 0s; }
+
+/* customer picker in settings */
+.cust-list { max-height: 56vh; overflow-y: auto; margin: 0 -1rem; padding: 0 1rem; }
+.cust {
+  width: 100%; display: flex; align-items: center; gap: 2rem; text-align: left;
+  padding: 1.4rem 1.6rem; border-radius: 1.2rem; border: 1px solid transparent; margin-bottom: .8rem;
+  background: var(--forged-hi); font-size: 2rem; font-weight: 500;
+}
+.cust.on { border-color: var(--signal-hi); background: rgba(0,114,187,.28); }
+.cust .mini { flex: none; width: 13rem; height: 6.4rem; border-radius: .7rem; background: #fff; display: grid; place-items: center; padding: .6rem 1rem; }
+.cust .mini img { max-width: 100%; max-height: 100%; display: block; }
+.cust .mini.none { background: transparent; border: 1px dashed var(--line-hi); color: var(--steel); font-size: 1.5rem; font-weight: 400; }
+.cust .tick { margin-left: auto; width: 3.6rem; height: 3.6rem; border-radius: 50%; border: 2px solid var(--line-hi); flex: none; display: grid; place-items: center; }
+.cust.on .tick { background: var(--signal); border-color: var(--signal); }
+.cust.on .tick::after { content: ""; width: 1.4rem; height: .8rem; border-left: .3rem solid #fff; border-bottom: .3rem solid #fff; transform: translateY(-.2rem) rotate(-45deg); }
+.cust-empty { color: var(--steel); font-size: 1.8rem; line-height: 1.5; padding: 2rem 0 1rem; }
+.cust-empty code { color: var(--chalk); font-family: var(--body); font-weight: 500; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+/* ===== Full-screen viewers drawn by the web version ===== */
+:root { --dp: calc(100vmin / 720); }
+.nv { position: fixed; inset: 0; z-index: 70; background: #000; overflow: hidden; }
+.nv[hidden] { display: none; }
+.nv-view { position: absolute; inset: 0; display: none; }
+.nv-view.on { display: block; }
+.gpill, .gc { background: rgba(18, 34, 59, .86); border: 1px solid rgba(255,255,255,.18); color: var(--chalk); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.gc { width: calc(76 * var(--dp)); height: calc(76 * var(--dp)); border-radius: 50%; display: grid; place-items: center; flex: none; transition: opacity .2s; }
+.gc svg { width: calc(30 * var(--dp)); height: calc(30 * var(--dp)); fill: var(--chalk); }
+.gc:active { background: rgba(34,57,94,.92); }
+.gc:disabled { opacity: .3; }
+.navbar { position: absolute; top: calc(28 * var(--dp)); left: calc(28 * var(--dp)); display: flex; gap: calc(14 * var(--dp)); align-items: center; z-index: 5; }
+.gpill.homepill { height: calc(76 * var(--dp)); border-radius: 99em; display: flex; align-items: center; gap: calc(16 * var(--dp)); padding: 0 calc(30 * var(--dp)) 0 calc(12 * var(--dp)); font-family: var(--body); font-size: calc(22 * var(--dp)); }
+.hdot { width: calc(52 * var(--dp)); height: calc(52 * var(--dp)); border-radius: 50%; background: var(--signal); display: grid; place-items: center; }
+.hdot svg { width: calc(26 * var(--dp)); height: calc(26 * var(--dp)); fill: var(--chalk); }
+
+#nvYoutube iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
+#nvYoutube .ytpad { position: absolute; left: 0; right: 0; top: 0; height: calc(132 * var(--dp)); background: var(--graphite); }
+#nvYoutube iframe { top: calc(132 * var(--dp)); height: calc(100% - 132 * var(--dp)); }
+
+#vid { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; object-fit: contain; }
+
+#nvPdf { background: #000; touch-action: pan-y; }
+.pdf-track { position: absolute; inset: 0; display: flex; will-change: transform; }
+.pdf-page { flex: 0 0 100%; height: 100%; display: grid; place-items: center; }
+.pdf-page canvas { display: block; background: #fff; }
+.pdf-loading[hidden] { display: none; }
+.pdf-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--steel); font-family: var(--body); font-size: calc(22 * var(--dp)); }
+.pdf-bar { position: absolute; left: 50%; bottom: calc(36 * var(--dp)); transform: translateX(-50%); display: flex; align-items: center; gap: calc(16 * var(--dp)); z-index: 5; }
+.pdf-bar[hidden] { display: none; }
+.pdf-bar .gpill { height: calc(64 * var(--dp)); min-width: calc(200 * var(--dp)); padding: 0 calc(28 * var(--dp)); border-radius: 99em; display: grid; place-items: center; font-size: calc(22 * var(--dp)); font-family: var(--body); white-space: nowrap; }
+.pdf-bar .gc { width: calc(84 * var(--dp)); height: calc(84 * var(--dp)); }
+.nv .navbar, .nv .pdf-bar { transition: opacity .25s, visibility 0s; }
+.nv.chrome-off .navbar, .nv.chrome-off .pdf-bar { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .26s, visibility 0s linear .26s; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="g-catalog" viewBox="0 0 48 48">
+      <rect x="7" y="6" width="26" height="34" rx="2"/>
+      <path d="M12 14h16M12 20h16M12 26h9"/>
+      <circle class="accent" cx="31" cy="30" r="7"/>
+      <path class="accent" d="M36 35l6 6"/>
+    </symbol>
+    <symbol id="g-video" viewBox="0 0 48 48">
+      <rect x="5" y="10" width="38" height="26" rx="5"/>
+      <path class="accent" d="M20 17.5v11l9.5-5.5z"/>
+      <path d="M14 42h20"/>
+    </symbol>
+    <symbol id="g-media" viewBox="0 0 48 48">
+      <path d="M5 13a3 3 0 0 1 3-3h10l4 4h18a3 3 0 0 1 3 3v20a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/>
+      <path class="accent" d="M18 21v10l8-5z"/>
+      <path d="M30 22h7M30 26h7M30 30h5"/>
+    </symbol>
+    <symbol id="g-doc" viewBox="0 0 48 48">
+      <path d="M12 5h17l9 9v29H12z"/><path d="M29 5v9h9M17 22h15M17 28h15M17 34h10"/>
+    </symbol>
+    <symbol id="g-go" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  </defs>
+</svg>
+
+<main class="home" id="home">
+  <header class="topbar">
+    <div class="wordmark" id="wordmark"><img src="logo-white.png" alt="Mevotech" draggable="false"></div>
+    <div class="clock"><div class="time" id="time">--:--</div><div class="date" id="date"></div></div>
+  </header>
+
+
+  <section class="hero" id="hero">
+    <svg id="scene" viewBox="-196 -112 350 236" preserveAspectRatio="xMidYMid meet" aria-label="Front suspension corner. Tap a part to see what it does."></svg>
+    <div class="caption">
+      <div class="cap-text" id="capText"><div class="cap-name" id="capName">Engineered for technicians</div><div class="cap-desc" id="capDesc">The parts that keep a wheel on the road, in motion.</div></div>
+      <div class="cap-foot"><div class="segs" id="segs"></div>
+      <div class="cap-hint">Tap a part to see what it does.<br>Drag to work the suspension.</div></div>
+    </div>
+  </section>
+
+  <nav class="tiles" id="tiles">
+    <button class="tile" data-dest="catalog" data-sub="Opening mevotech.com">
+      <div>
+        <h2>Parts catalog</h2>
+        <p>Look up parts by vehicle, part number or category on mevotech.com.</p>
+      </div>
+      <div class="side"><svg class="glyph"><use href="#g-catalog"/></svg></div>
+      <span class="sweep"></span>
+    </button>
+    <button class="tile" data-dest="youtube" data-sub="Opening YouTube">
+      <div>
+        <h2>Videos</h2>
+        <p>Installation, product training and technical support on the Mevotech YouTube channel.</p>
+      </div>
+      <div class="side"><svg class="glyph"><use href="#g-video"/></svg></div>
+      <span class="sweep"></span>
+    </button>
+    <button class="tile" data-dest="library">
+      <div>
+        <div class="titlerow"><h2>Media library</h2><span class="count" id="mediaCount"></span></div>
+        <p>Videos and PDFs saved on this display.</p>
+      </div>
+      <div class="side"><svg class="glyph"><use href="#g-media"/></svg></div>
+      <span class="sweep"></span>
+    </button>
+  </nav>
+
+  <p class="hint">Tap an option to open it full screen. <strong>Menu</strong>, <strong>Close</strong> or the back button brings you back here.</p>
+</main>
+
+<section id="library" aria-label="Media library">
+  <header class="lib-head">
+    <div class="lib-row">
+      <button class="pill" id="libBack"><span class="dot"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>Menu</button>
+      <button class="icon-btn" id="refresh" aria-label="Refresh"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+    </div>
+    <div class="lib-row">
+      <div class="lib-title"><h1>Media library</h1><div id="libFolder"></div></div>
+      <div class="seg" id="filters"><span class="knob"></span>
+        <button class="on" data-f="all">All</button><button data-f="video">Videos</button><button data-f="pdf">PDFs</button>
+      </div>
+    </div>
+  </header>
+  <div class="lib-body" id="libBody"></div>
+</section>
+
+<div id="launch"><div class="stack">
+  <svg class="glyph" id="launchGlyph"><use href="#g-catalog"/></svg>
+  <h2 id="launchTitle"></h2>
+  <div class="track"><i></i></div>
+  <div class="sub" id="launchSub"></div>
+</div></div>
+
+<section id="greet" aria-label="Customer welcome">
+  <svg class="arcs" viewBox="0 0 100 178" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g class="a1"><circle cx="50" cy="76" r="44" stroke="#0072BB" stroke-width=".9" stroke-dasharray="70 206" stroke-linecap="round" opacity=".8"/></g>
+    <g class="a2"><circle cx="50" cy="76" r="52" stroke="#3D9BE0" stroke-width=".35" stroke-dasharray="40 80 120 87" opacity=".5"/></g>
+    <g class="a3"><circle cx="50" cy="76" r="62" stroke="#8EA2BF" stroke-width=".2" stroke-dasharray="1 2.2" opacity=".45"/></g>
+  </svg>
+  <button class="g-close" id="greetClose"><span class="dot"><svg viewBox="0 0 24 24"><path d="M19,6.41L17.59,5 12,10.59 6.41,5 5,6.41 10.59,12 5,17.59 6.41,19 12,13.41 17.59,19 19,17.59 13.41,12z"/></svg></span>Close</button>
+  <img class="g-mevo" src="logo-white.png" alt="Mevotech" draggable="false">
+  <div class="g-body">
+    <div class="g-hi">Welcome</div>
+    <div class="g-plate" id="gPlate"></div>
+    <div class="g-name" id="gName"></div>
+    <div class="g-rule"></div>
+  </div>
+  <div class="g-foot"><b id="gTime"></b><span id="gDate"></span></div>
+</section>
+
+<div id="admin"><div class="sheet" id="sheet"></div></div>
+<div id="nv" class="nv" hidden>
+  <div class="nv-view" id="nvYoutube"><div class="ytpad"></div><iframe id="ytFrame" title="Mevotech on YouTube" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe></div>
+  <div class="nv-view" id="nvVideo"><video id="vid" playsinline controls controlslist="nodownload"></video></div>
+  <div class="nv-view" id="nvPdf"><div class="pdf-track" id="pdfTrack"></div><div class="pdf-loading" id="pdfLoading">Opening PDF</div></div>
+  <div class="pdf-bar" id="pdfBar" hidden>
+    <button class="gc" id="pPrev" aria-label="Previous page"><svg viewBox="0 0 24 24"><path d="M15.41,7.41L14,6l-6,6 6,6 1.41,-1.41L10.83,12z"/></svg></button>
+    <div class="gpill" id="pInd">Page 1 of 1</div>
+    <button class="gc" id="pNext" aria-label="Next page"><svg viewBox="0 0 24 24"><path d="M10,6L8.59,7.41 13.17,12l-4.58,4.59L10,18l6,-6z"/></svg></button>
+  </div>
+  <div class="navbar" id="navBar">
+    <button class="gpill homepill" id="homeBtn"><span class="hdot"><svg viewBox="0 0 24 24" id="homeIco"></svg></span><span id="homeLbl">Menu</span></button>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="web.js"></script>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const EASE_OUT = "cubic-bezier(.16,1,.3,1)", EASE_IO = "cubic-bezier(.65,0,.35,1)";
+
+  /* ---------- Native bridge, with a stand-in so the page previews in a browser ---------- */
+  const native = typeof window.Kiosk !== "undefined";
+  const K = native ? window.Kiosk : (() => {
+    let pinned = false;
+    const sample = { configured: true, folder: "Showroom", error: null, items: [
+      { id: "a", name: "Control arm installation", type: "video", folder: "Training", thumb: null, meta: "4:12" },
+      { id: "b", name: "TTX ball joint overview", type: "video", folder: "Training", thumb: null, meta: "2:38" },
+      { id: "c", name: "Hub assembly torque specs", type: "pdf", folder: "Spec sheets", thumb: null, meta: "6 pages" },
+      { id: "d", name: "Brake pad line card", type: "pdf", folder: "Spec sheets", thumb: null, meta: "2 pages" },
+      { id: "e", name: "Supreme sway bar links", type: "video", folder: "", thumb: null, meta: "1:55" },
+    ]};
+    const back = () => setTimeout(() => KioskUI.onReturn(false), 2600);
+    return {
+      open: d => { toast(`Preview: the app opens ${d} here`); back(); },
+      openMedia: () => { toast("Preview: the file opens full screen here"); back(); },
+      requestMedia: () => setTimeout(() => KioskUI.onMedia(JSON.stringify(sample)), 300),
+      pickMediaFolder: () => toast("Preview: the folder picker opens on the display"),
+      checkPin: p => p === "2580", isPinned: () => pinned, setPinned: v => { pinned = v; }, setCustomer: () => {},
+      openSystemSettings: () => toast("Preview: Android settings open on the display"),
+      appVersion: () => "preview",
+    };
+  })();
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 3200);
+  }
+
+  /* ---------- Clock ---------- */
+  function tick() {
+    const now = new Date();
+    $("#time").textContent = now.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" });
+    $("#date").textContent = now.toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" });
+    $("#gTime").textContent = $("#time").textContent;
+    $("#gDate").textContent = $("#date").textContent;
+  }
+  tick(); setInterval(tick, 10000);
+
+  /* ================= Suspension corner: Mevotech parts in motion ================= */
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = $("#scene");
+  const UU = n => (typeof U === "function" ? U(n) : n * Math.min(innerWidth, innerHeight) * .015);
+  const mk = (tag, attrs = {}, parent = svg) => {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    parent.appendChild(n); return n;
+  };
+  const set = (n, attrs) => { for (const k in attrs) n.setAttribute(k, attrs[k]); };
+  const P = (x, y) => ({ x, y });
+  const add = (a, b) => P(a.x + b.x, a.y + b.y), sub = (a, b) => P(a.x - b.x, a.y - b.y);
+  const mul = (a, k) => P(a.x * k, a.y * k), lerp = (a, b, t) => P(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+  const len = a => Math.hypot(a.x, a.y), norm = a => mul(a, 1 / (len(a) || 1));
+  const f = n => n.toFixed(2);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+  const PARTS = [
+    { id: "arms",   name: "Control arms",  desc: "Hold the wheel in place and let it travel with the road.", ex: [-46, 26] },
+    { id: "joints", name: "Ball joints",   desc: "The pivots between the control arms and the steering knuckle.", ex: [34, -30] },
+    { id: "hub",    name: "Hub assembly",  desc: "The bearing the wheel turns on.", ex: [56, 0] },
+    { id: "pads",   name: "Brake pads",    desc: "Clamp the rotor to slow the wheel.", ex: [0, -60] },
+    { id: "link",   name: "Sway bar link", desc: "Ties the sway bar to the suspension to keep body roll in check.", ex: [-20, 48] },
+    { id: "tierod", name: "Tie rod end",   desc: "Connects the steering rack to the knuckle.", ex: [-56, -14] },
+  ];
+  const byId = Object.fromEntries(PARTS.map(p => [p.id, p]));
+
+  // Fixed chassis points (scene units, y down)
+  const P1 = P(-112, 40), L1 = 150;   // lower control arm inner pivot
+  const P2 = P(-80, -45), L2 = 111;   // upper control arm inner pivot
+  const RACK = P(-112, -6), SPRING_TOP = P(-58, -92), KNUCKLE = 95;
+
+  // ---- static and background layers ----
+  const road = mk("g", { class: "neutral" });
+  const roadFill = mk("rect", { x: -700, width: 1400, height: 90, class: "road" }, road);
+  const roadEdge = mk("line", { x1: -700, x2: 700, class: "roadedge" }, road);
+  const roadDash = mk("line", { x1: -700, x2: 700, class: "dash" }, road);
+  mk("path", { d: "M-700 30 H-104 V-56 L-64 -100 H-700", class: "chassis neutral" });
+
+  const springG = mk("g", { class: "neutral" });
+  const shock = mk("line", { class: "thin", "stroke-width": 5, opacity: .35 }, springG);
+  const coil = mk("path", { class: "thin", "stroke-width": 1.6 }, springG);
+  const swayBar = mk("path", { class: "rod neutral", "stroke-width": 4.2, opacity: .7 });
+
+  // ---- parts ----
+  const G = {};
+  PARTS.forEach(p => { G[p.id] = mk("g", { class: "part", "data-part": p.id }); });
+
+  const tieRod = mk("line", { class: "rod" }, G.tierod);
+  const tieBoot = mk("path", { class: "thin", "stroke-width": 1.4 }, G.tierod);
+  const tieEnd = mk("circle", { r: 5.5, class: "solid" }, G.tierod);
+  const tieHit = mk("line", { class: "hit" }, G.tierod);
+
+  const uca = mk("path", { class: "solid" }, G.arms);
+  const lca = mk("path", { class: "solid" }, G.arms);
+  const bush1 = mk("circle", { r: 9, class: "solid" }, G.arms);
+  const bush1i = mk("circle", { r: 3.6, class: "thin" }, G.arms);
+  const bush2 = mk("circle", { r: 7, class: "solid" }, G.arms);
+  const bush2i = mk("circle", { r: 3, class: "thin" }, G.arms);
+
+  const knuckle = mk("path", { class: "thin neutral", "stroke-width": 11, stroke: "#2A4268", opacity: 1 });
+
+  const linkG = G.link;
+  const linkRod = mk("line", { class: "rod", "stroke-width": 3 }, linkG);
+  const linkA = mk("circle", { r: 4.2, class: "solid" }, linkG);
+  const linkB = mk("circle", { r: 4.2, class: "solid" }, linkG);
+  const linkHit = mk("line", { class: "hit" }, linkG);
+
+  // wheel end (rotates with camber)
+  const wheel = mk("g", {});
+  const tire = mk("rect", { x: 24, y: -104, width: 74, height: 208, rx: 26, class: "tire neutral" }, wheel);
+  const clip = mk("clipPath", { id: "tireClip" }, svg);
+  mk("rect", { x: 24, y: -104, width: 74, height: 208, rx: 26 }, clip);
+  const treadWrap = mk("g", { "clip-path": "url(#tireClip)", class: "neutral" }, wheel);
+  const tread = mk("g", { class: "tread" }, treadWrap);
+  for (let y = -126; y <= 126; y += 14) {
+    mk("line", { x1: 32, x2: 56, y1: y, y2: y + 4 }, tread);
+    mk("line", { x1: 66, x2: 90, y1: y + 4, y2: y }, tread);
+  }
+  mk("rect", { x: 30, y: -70, width: 56, height: 140, rx: 8, class: "rim neutral" }, wheel);
+  const rotor = mk("rect", { x: 7, y: -76, width: 9, height: 152, rx: 2, class: "solid neutral" }, wheel);
+  G.hub.remove(); wheel.appendChild(G.hub);
+  mk("rect", { x: -28, y: -24, width: 28, height: 48, rx: 5, class: "solid" }, G.hub);
+  mk("rect", { x: 0, y: -40, width: 7, height: 80, rx: 2, class: "solid" }, G.hub);
+  for (const y of [-28, -10, 10, 28]) mk("line", { x1: 7, x2: 27, y1: y, y2: y, class: "thin", "stroke-width": 2.2 }, G.hub);
+  mk("line", { x1: -22, x2: -6, y1: 0, y2: 0, class: "thin" }, G.hub);
+  mk("rect", { x: -28, y: -40, width: 56, height: 80, class: "hit", "stroke-width": 0 }, G.hub);
+  mk("path", { d: "M0 -46 V-84 H23 V-46 H19.5 V-80 H3.5 V-46 Z", class: "solid neutral" }, wheel);  // caliper
+  G.pads.remove(); wheel.appendChild(G.pads);
+  const padIn = mk("rect", { y: -76, width: 3.2, height: 24, rx: 1, class: "solid" }, G.pads);
+  const padOut = mk("rect", { y: -76, width: 3.2, height: 24, rx: 1, class: "solid" }, G.pads);
+  mk("rect", { x: -6, y: -92, width: 36, height: 50, class: "hit", "stroke-width": 0 }, G.pads);
+
+  // ball joints sit on top of everything they connect
+  svg.appendChild(G.joints);
+  const bj1 = mk("circle", { r: 7.5, class: "solid" }, G.joints);
+  const bj2 = mk("circle", { r: 6.5, class: "solid" }, G.joints);
+  const bj1i = mk("circle", { r: 2.6, class: "thin" }, G.joints);
+  const bj2i = mk("circle", { r: 2.3, class: "thin" }, G.joints);
+  const bjHit1 = mk("circle", { r: 15, class: "hit", "stroke-width": 0 }, G.joints);
+  const bjHit2 = mk("circle", { r: 15, class: "hit", "stroke-width": 0 }, G.joints);
+  const armHit1 = mk("line", { class: "hit" }, G.arms);
+  const armHit2 = mk("line", { class: "hit" }, G.arms);
+  const ringG = mk("g", {});
+  const ring = mk("circle", { r: 16, class: "ring" }, ringG);
+  ringG.style.display = "none";
+
+  // ---- motion state ----
+  const IDLE = reduceMotion ? 0 : 70;     // road speed, scene units per second
+  const LAUNCH = reduceMotion ? 0 : 900;
+  let speed = IDLE, target = IDLE, roll = 0, clock = 0, last = 0, running = true;
+  let x = 0, v = 0, bumps = [], nextBump = 3, dragging = false, dragX = 0;
+  let selected = null, lastPoke = -99;
+
+  function bump(scale = 1) { bumps.push({ t: 0, dur: .24, h: 13 * scale }); }
+
+  function assemble() {
+    PARTS.forEach((p, i) => { p.delay = clock + .25 + i * .16; });
+    wheelDelay = clock + .1;
+  }
+  let wheelDelay = 0;
+  assemble();
+
+  function offsetOf(p) {
+    const a = easeOut(clamp((clock - p.delay) / .8, 0, 1));
+    let ox = p.ex[0] * 2.2 * (1 - a), oy = p.ex[1] * 2.2 * (1 - a);
+    if (p.popT != null) {
+      const k = (clock - p.popT) / .55;
+      if (k < 1) { const n = norm(P(p.ex[0], p.ex[1])), s = Math.sin(Math.PI * k) * 9; ox += n.x * s; oy += n.y * s; }
+    }
+    return { ox, oy, a };
+  }
+
+  function coilPath(a, b) {
+    const d = sub(b, a), L = len(d), u = mul(d, 1 / L), p = P(-u.y, u.x);
+    const n = 16, s0 = .1, s1 = .9;
+    let path = `M${f(a.x)} ${f(a.y)}`;
+    const st = lerp(a, b, s0); path += ` L${f(st.x)} ${f(st.y)}`;
+    for (let i = 1; i <= n; i++) {
+      const t = s0 + (s1 - s0) * (i - .5) / n, c = add(lerp(a, b, t), mul(p, (i % 2 ? 1 : -1) * 11));
+      path += ` L${f(c.x)} ${f(c.y)}`;
+    }
+    const en = lerp(a, b, s1); path += ` L${f(en.x)} ${f(en.y)} L${f(b.x)} ${f(b.y)}`;
+    return path;
+  }
+  function armPath(a, b, wa, wb) {
+    const u = norm(sub(b, a)), p = P(-u.y, u.x);
+    const a1 = add(a, mul(p, wa)), a2 = sub(a, mul(p, wa)), b1 = add(b, mul(p, wb)), b2 = sub(b, mul(p, wb));
+    return `M${f(a1.x)} ${f(a1.y)} L${f(b1.x)} ${f(b1.y)} L${f(b2.x)} ${f(b2.y)} L${f(a2.x)} ${f(a2.y)} Z`;
+  }
+  const tr = (g, o) => g.setAttribute("transform", `translate(${f(o.ox)} ${f(o.oy)})`);
+
+  function layout() {
+    // real short-long-arm geometry: the knuckle tilts as the wheel travels
+    const b1y = 55 - x;
+    const B1 = P(P1.x + Math.sqrt(L1 * L1 - (b1y - P1.y) ** 2), b1y);
+    const b2y = b1y - KNUCKLE;
+    const B2 = P(P2.x + Math.sqrt(L2 * L2 - (b2y - P2.y) ** 2), b2y);
+    const u = norm(sub(B2, B1)), n = P(-u.y, u.x);
+    const H = add(lerp(B1, B2, .5), mul(n, 30));
+    const ang = Math.atan2(n.y, n.x) * 180 / Math.PI;
+
+    const wo = easeOut(clamp((clock - wheelDelay) / .9, 0, 1));
+    set(wheel, { transform: `translate(${f(H.x + 70 * (1 - wo))} ${f(H.y)}) rotate(${f(ang)})`, opacity: f(wo) });
+
+    // road sits under the tyre's contact patch
+    const rad = ang * Math.PI / 180, cx = 61, cy = 104;
+    const roadY = H.y + cx * Math.sin(rad) + cy * Math.cos(rad);
+    set(roadFill, { y: f(roadY) }); set(roadEdge, { y1: f(roadY), y2: f(roadY) });
+    set(roadDash, { y1: f(roadY + 12), y2: f(roadY + 12), "stroke-dashoffset": f(-roll % 30) });
+    tread.setAttribute("transform", `translate(0 ${f(roll % 14)})`);
+
+    // control arms
+    const oA = offsetOf(byId.arms); tr(G.arms, oA); G.arms.setAttribute("opacity", f(oA.a));
+    set(lca, { d: armPath(P1, B1, 7.5, 5) }); set(uca, { d: armPath(P2, B2, 5.5, 4) });
+    set(bush1, { cx: P1.x, cy: P1.y }); set(bush1i, { cx: P1.x, cy: P1.y });
+    set(bush2, { cx: P2.x, cy: P2.y }); set(bush2i, { cx: P2.x, cy: P2.y });
+    set(armHit1, { x1: P1.x, y1: P1.y, x2: B1.x, y2: B1.y }); set(armHit2, { x1: P2.x, y1: P2.y, x2: B2.x, y2: B2.y });
+
+    const K = add(lerp(B1, B2, .5), mul(n, 12));
+    set(knuckle, { d: `M${f(B1.x)} ${f(B1.y)} L${f(K.x)} ${f(K.y)} L${f(B2.x)} ${f(B2.y)}` });
+
+    const oJ = offsetOf(byId.joints); tr(G.joints, oJ); G.joints.setAttribute("opacity", f(oJ.a));
+    for (const [c, pt] of [[bj1, B1], [bj1i, B1], [bjHit1, B1], [bj2, B2], [bj2i, B2], [bjHit2, B2]]) set(c, { cx: f(pt.x), cy: f(pt.y) });
+
+    // spring and shock
+    const S1 = lerp(P1, B1, .62);
+    set(coil, { d: coilPath(S1, SPRING_TOP) });
+    set(shock, { x1: f(S1.x), y1: f(S1.y), x2: SPRING_TOP.x, y2: SPRING_TOP.y });
+
+    // sway bar link: rigid link, the bar end follows it
+    const oL = offsetOf(byId.link); tr(G.link, oL); G.link.setAttribute("opacity", f(oL.a));
+    const LA = lerp(P1, B1, .42), LB = P(LA.x - 3, LA.y + 40);
+    set(linkRod, { x1: f(LA.x), y1: f(LA.y), x2: f(LB.x), y2: f(LB.y) });
+    set(linkHit, { x1: f(LA.x), y1: f(LA.y), x2: f(LB.x), y2: f(LB.y) });
+    set(linkA, { cx: f(LA.x), cy: f(LA.y) }); set(linkB, { cx: f(LB.x), cy: f(LB.y) });
+    set(swayBar, { d: `M-700 86 L-116 86 Q${f(LB.x - 40)} 86 ${f(LB.x)} ${f(LB.y)}` });
+
+    // tie rod to the steering arm on the knuckle
+    const oT = offsetOf(byId.tierod); tr(G.tierod, oT); G.tierod.setAttribute("opacity", f(oT.a));
+    const T = sub(lerp(B1, B2, .44), mul(n, 13));
+    set(tieRod, { x1: RACK.x, y1: RACK.y, x2: f(T.x), y2: f(T.y) });
+    set(tieHit, { x1: RACK.x, y1: RACK.y, x2: f(T.x), y2: f(T.y) });
+    set(tieEnd, { cx: f(T.x), cy: f(T.y) });
+    const bu = norm(sub(T, RACK)), bp = P(-bu.y, bu.x);
+    let boot = ""; for (let i = 0; i <= 6; i++) { const c = add(add(RACK, mul(bu, 6 + i * 4)), mul(bp, (i % 2 ? 6 : 3.5))); const c2 = add(add(RACK, mul(bu, 6 + i * 4)), mul(bp, -(i % 2 ? 6 : 3.5))); boot += `M${f(c.x)} ${f(c.y)} L${f(c2.x)} ${f(c2.y)} `; }
+    set(tieBoot, { d: boot });
+
+    // hub and pads live in the wheel's own frame
+    const oH = offsetOf(byId.hub); tr(G.hub, oH); G.hub.setAttribute("opacity", f(oH.a));
+    const oP = offsetOf(byId.pads); tr(G.pads, oP); G.pads.setAttribute("opacity", f(oP.a));
+    const sq = selected === "pads" ? (.5 + .5 * Math.sin(clock * 7)) * 1.4 : 0;
+    padIn.setAttribute("x", f(3.6 + sq));    // pads either side of the rotor, clamping when selected
+    padOut.setAttribute("x", f(16.2 - sq));
+
+    // highlight ring follows the selected part
+    if (selected) {
+      const world = (lx, ly) => P(H.x + lx * Math.cos(rad) - ly * Math.sin(rad), H.y + lx * Math.sin(rad) + ly * Math.cos(rad));
+      const at = { arms: lerp(P1, B1, .55), joints: B1, hub: world(-6, 0), pads: world(11, -64), link: lerp(LA, LB, .5), tierod: T }[selected];
+      ringG.setAttribute("transform", `translate(${f(at.x)} ${f(at.y)})`);
+    }
+  }
+
+  function frame(ts) {
+    if (!running) return;
+    const dt = last ? Math.min(.05, (ts - last) / 1000) : 0;
+    last = ts; clock += dt;
+    speed += (target - speed) * Math.min(1, dt * 2.2);
+    roll += speed * dt;
+    nextBump -= dt * (speed > IDLE * 3 ? 4 : 1);
+    if (nextBump <= 0 && !reduceMotion) { bump(.5 + Math.random() * .7); nextBump = 2 + Math.random() * 2.8; }
+    let roadH = 0;
+    bumps = bumps.filter(b => (b.t += dt) < b.dur);
+    for (const b of bumps) roadH += b.h * Math.sin(Math.PI * b.t / b.dur);
+    if (dragging) { v = dt ? (dragX - x) / dt : 0; x = dragX; }
+    else { const acc = 170 * (roadH - x) - 10 * v; v += acc * dt; x += v * dt; }
+    x = clamp(x, -24, 28);
+    layout();
+    requestAnimationFrame(frame);
+  }
+  function startSpin() { if (!running) { running = true; last = 0; requestAnimationFrame(frame); } }
+  requestAnimationFrame(frame);
+
+  // ---- caption and part selection ----
+  const CYCLE = 4.5;
+  const segs = $("#segs");
+  segs.style.setProperty("--cycle", CYCLE + "s");
+  segs.innerHTML = PARTS.map(p => `<button data-part="${p.id}" aria-label="${p.name}"><i></i></button>`).join("");
+
+  function select(id, byHand) {
+    selected = id;
+    const p = byId[id];
+    PARTS.forEach(q => G[q.id].classList.toggle("sel", q.id === id));
+    svg.classList.add("focus");
+    ringG.style.display = "";
+    $$("button", segs).forEach(b => {
+      b.classList.remove("on"); void b.offsetWidth;
+      b.classList.toggle("on", b.dataset.part === id);
+    });
+    segs.classList.toggle("hold", !!byHand);
+    $("#capName").textContent = p.name;
+    $("#capDesc").textContent = p.desc;
+    if (!reduceMotion) {
+      $("#capText").animate([{ opacity: 0, transform: `translateY(${UU(1.6)}px)` }, { opacity: 1, transform: "none" }],
+        { duration: 500, easing: EASE_OUT });
+    }
+    if (byHand) { p.popT = clock; lastPoke = clock; if (id === "arms" || id === "link") bump(1.3); }
+  }
+  const INTRO = { name: $("#capName").textContent, desc: $("#capDesc").textContent };
+  function showIntro() {
+    selected = null;
+    PARTS.forEach(q => G[q.id].classList.remove("sel"));
+    svg.classList.remove("focus");
+    ringG.style.display = "none";
+    $$("button", segs).forEach(b => b.classList.remove("on"));
+    $("#capName").textContent = INTRO.name;
+    $("#capDesc").textContent = INTRO.desc;
+    if (!reduceMotion) $("#capText").animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
+  }
+  segs.addEventListener("click", e => { const b = e.target.closest("button"); if (b) select(b.dataset.part, true); });
+
+  // auto tour: one part after another, paused for a while after someone taps
+  setInterval(() => {
+    if (state !== "home" || dragging) return;
+    if (clock - lastPoke < 12) return;
+    const i = selected ? PARTS.findIndex(p => p.id === selected) + 1 : 0;
+    if (i >= PARTS.length) showIntro(); else select(PARTS[i].id, false);
+  }, CYCLE * 1000);
+
+  // ---- touch: tap a part, drag to work the suspension ----
+  let downY = 0, downX = 0, startX = 0, moved = false, downPart = null;
+  const unitsPerPx = () => { const m = svg.getScreenCTM(); return m ? 1 / m.d : 1; };
+  svg.addEventListener("pointerdown", e => {
+    if (state !== "home") return;
+    svg.setPointerCapture(e.pointerId);
+    downY = e.clientY; downX = e.clientX; startX = x; moved = false; dragging = true; dragX = x;
+    const hit = document.elementsFromPoint(e.clientX, e.clientY).find(n => n.closest && n.closest("#scene [data-part]"));
+    downPart = hit ? hit.closest("[data-part]").dataset.part : null;
+    lastPoke = clock;
+  });
+  svg.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    const dy = (e.clientY - downY) * unitsPerPx();
+    if (Math.abs(e.clientY - downY) > 8) moved = true;
+    dragX = clamp(startX - dy, -24, 28);
+  });
+  const up = () => {
+    if (!dragging) return;
+    dragging = false;
+    if (!moved) { if (downPart) select(downPart, true); else bump(1.2); }
+    lastPoke = clock;
+  };
+  svg.addEventListener("pointerup", up);
+  svg.addEventListener("pointercancel", up);
+
+  /* ================= Tiles: finger-following light, tilt, ripple ================= */
+  function pointIn(tile, e) {
+    const r = tile.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top, w: r.width, h: r.height };
+  }
+  $$(".tile").forEach(tile => {
+    tile.addEventListener("pointerdown", e => {
+      if (state !== "home") return;
+      const p = pointIn(tile, e);
+      tile.style.setProperty("--x", p.x + "px");
+      tile.style.setProperty("--y", p.y + "px");
+      tile.style.setProperty("--glow", 1);
+      tile.style.setProperty("--rx", ((.5 - p.y / p.h) * 6).toFixed(2) + "deg");
+      tile.style.setProperty("--ry", ((p.x / p.w - .5) * 5).toFixed(2) + "deg");
+      tile.classList.add("held");
+      if (!reduceMotion) {
+        const rip = document.createElement("span");
+        rip.className = "ripple"; rip.style.left = p.x + "px"; rip.style.top = p.y + "px";
+        tile.appendChild(rip);
+        const size = Math.hypot(p.w, p.h) / 10;
+        rip.animate([{ transform: "scale(0)", opacity: 1 }, { transform: `scale(${size * 2.2})`, opacity: 0 }],
+          { duration: 900, easing: EASE_OUT }).onfinish = () => rip.remove();
+        $(".glyph", tile).animate([{ transform: "none" }, { transform: "scale(1.1) rotate(-4deg)" }, { transform: "none" }],
+          { duration: 600, easing: EASE_OUT });
+      }
+    });
+    tile.addEventListener("pointermove", e => {
+      if (!tile.classList.contains("held")) return;
+      const p = pointIn(tile, e);
+      tile.style.setProperty("--x", p.x + "px");
+      tile.style.setProperty("--y", p.y + "px");
+    });
+    const up = () => {
+      tile.classList.remove("held");
+      tile.style.setProperty("--rx", "0deg"); tile.style.setProperty("--ry", "0deg");
+      tile.style.setProperty("--glow", 0);
+    };
+    ["pointerup", "pointerleave", "pointercancel"].forEach(ev => tile.addEventListener(ev, up));
+  });
+
+  /* ================= Opening sequence & attract loop ================= */
+  function enter(delay = 0) {
+    if (reduceMotion) return;
+    $$(".tile").forEach((t, i) => t.animate(
+      [{ opacity: 0, transform: "translateY(6rem) rotateX(-14deg)" }, { opacity: 1, transform: "none" }],
+      { duration: 1000, delay: delay + i * 120, easing: EASE_OUT, fill: "backwards" }));
+    $(".wordmark img").animate([{ opacity: 0, transform: `translateY(${UU(1.5)}px)` }, { opacity: 1, transform: "none" }],
+      { duration: 1000, delay: delay + 150, easing: EASE_OUT, fill: "backwards" });
+    $$(".topbar > *, .hint, .nudge").forEach((n, i) => n.animate([{ opacity: 0 }, { opacity: 1 }],
+      { duration: 900, delay: delay + 150 + i * 160, fill: "backwards" }));
+  }
+  requestAnimationFrame(() => { document.body.classList.add("booted"); enter(450); });
+
+  // When nobody has touched the menu for a while, a light passes over each choice
+  let lastTouch = performance.now();
+  document.addEventListener("pointerdown", () => { lastTouch = performance.now(); }, true);
+  function attract() {
+    if (reduceMotion || state !== "home" || performance.now() - lastTouch < 20000) return;
+    $$(".tile .sweep").forEach((s, i) => s.animate(
+      [{ transform: "translateX(-120%) skewX(-12deg)" }, { transform: "translateX(460%) skewX(-12deg)" }],
+      { duration: 1600, delay: i * 220, easing: EASE_IO }));
+    if (!dragging) bump(1.4);
+  }
+  setInterval(attract, 12000);
+
+  /* ================= Launch / return ================= */
+  let state = "home";   // home | launching | away | library | returning
+  let origin = null, returnTo = "home";
+  const glyphs = { catalog: "#g-catalog", youtube: "#g-video", video: "#g-video", pdf: "#g-doc" };
+  const insetFor = (rect, r) =>
+    `inset(${rect.top}px ${innerWidth - rect.right}px ${innerHeight - rect.bottom}px ${rect.left}px round ${r}px)`;
+
+  function launch(fromEl, { title, sub, glyph, go }) {
+    if (state !== "home" && state !== "library") return;
+    returnTo = state; state = "launching"; origin = fromEl;
+    fromEl.classList.add("pressed");
+    const L = $("#launch");
+    $("#launchTitle").textContent = title;
+    $("#launchSub").textContent = sub;
+    $("#launchGlyph").innerHTML = `<use href="${glyph}"/>`;
+    L.classList.add("show", "loading");
+    const rect = fromEl.getBoundingClientRect();
+    const r = parseFloat(getComputedStyle(fromEl).borderRadius) || 0;
+    const dur = reduceMotion ? 1 : 640;
+    L.animate([{ clipPath: insetFor(rect, r) }, { clipPath: "inset(0px 0px 0px 0px round 0px)" }],
+      { duration: dur, easing: EASE_IO, fill: "both" });
+    $(".stack", L).animate([{ opacity: 0, transform: "translateY(3rem) scale(.96)" }, { opacity: 1, transform: "none" }],
+      { duration: dur, delay: dur * .35, easing: EASE_OUT, fill: "both" });
+    target = LAUNCH;
+    setTimeout(() => { state = "away"; go(); }, dur + 120);
+  }
+
+  function onReturn(fromIdle) {
+    if (state === "home" || state === "library" || state === "returning") return;
+    state = "returning";
+    startSpin(); target = IDLE; if (fromIdle || returnTo === "home") assemble();
+    const L = $("#launch");
+    L.classList.remove("loading");
+    const backToLibrary = !fromIdle && returnTo === "library";
+    if (fromIdle) closeLibrary(true);
+    const finish = () => {
+      L.getAnimations().forEach(a => a.cancel());
+      $(".stack", L).getAnimations().forEach(a => a.cancel());
+      L.classList.remove("show");
+      if (origin) origin.classList.remove("pressed");
+      state = backToLibrary ? "library" : "home";
+      if (fromIdle && customer) showGreet();
+      if (state === "home") { requestMedia(); }
+    };
+    const visible = origin && origin.isConnected && origin.getClientRects().length;
+    if (!visible || reduceMotion || fromIdle) {
+      L.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: "forwards" }).onfinish = finish;
+      return;
+    }
+    const rect = origin.getBoundingClientRect();
+    const r = parseFloat(getComputedStyle(origin).borderRadius) || 0;
+    $(".stack", L).animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: "forwards" });
+    L.animate([{ clipPath: "inset(0px 0px 0px 0px round 0px)" }, { clipPath: insetFor(rect, r) }],
+      { duration: 580, delay: 120, easing: EASE_IO, fill: "forwards" }).onfinish = finish;
+  }
+
+  $$(".tile").forEach(tile => tile.addEventListener("click", () => {
+    const dest = tile.dataset.dest;
+    if (dest === "library") return openLibrary();
+    launch(tile, { title: $("h2", tile).textContent, sub: tile.dataset.sub, glyph: glyphs[dest], go: () => K.open(dest) });
+  }));
+
+  /* ================= Media library ================= */
+  let mediaState = { configured: false, folder: null, error: null, items: [] };
+  let filter = "all";
+  function requestMedia() { try { K.requestMedia(); } catch (e) {} }
+
+  /* ================= Customer welcome ================= */
+  let customers = [], customer = null;
+  const initials = n => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("");
+  function plateHTML(c) {
+    return c.logo ? `<img src="${esc(c.logo)}" alt="${esc(c.name)}" draggable="false">` : `<span class="initials">${esc(initials(c.name))}</span>`;
+  }
+  let greetShown = false, greetT;
+  function applyCustomer(next) {
+    const changed = (next && next.name) !== (customer && customer.name) || (next && customer && next.logo !== customer.logo);
+    customer = next;
+    if (!customer) { hideGreet(); return; }
+    if (changed) {
+      $("#gPlate").innerHTML = plateHTML(customer);
+      $("#gName").textContent = customer.name;
+    }
+  }
+  function greetChrome(on) {
+    $("#greet").classList.toggle("chrome", on);
+    clearTimeout(greetT);
+    if (on) greetT = setTimeout(() => greetChrome(false), 4000);
+  }
+  function showGreet() {
+    if (!customer) return;
+    const g = $("#greet");
+    greetChrome(false);
+    if (greetShown) return;
+    greetShown = true;
+    if (state === "library") closeLibrary(true);
+    state = "greet";
+    g.classList.add("show");
+    if (reduceMotion) return;
+    g.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 600 });
+    const parts = [".g-mevo", ".g-hi", ".g-plate", ".g-name", ".g-rule", ".g-foot"];
+    parts.forEach((sel, i) => $(sel, g).animate(
+      sel === ".g-plate" ? [{ opacity: 0, transform: "scale(.88)" }, { opacity: 1, transform: "none" }]
+      : sel === ".g-rule" ? [{ transform: "scaleX(0)" }, { transform: "none" }]
+      : [{ opacity: 0, transform: `translateY(${UU(3)}px)` }, { opacity: 1, transform: "none" }],
+      { duration: 1100, delay: 200 + i * 110, easing: EASE_OUT, fill: "backwards" }));
+  }
+  function hideGreet(animate = true) {
+    if (!greetShown) return;
+    greetShown = false;
+    clearTimeout(greetT);
+    const g = $("#greet");
+    const done = () => { g.classList.remove("show", "chrome"); if (state === "greet") state = "home"; enter(0); };
+    if (!animate || reduceMotion) return done();
+    g.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(1.04)" }],
+      { duration: 450, easing: EASE_OUT }).onfinish = done;
+  }
+  $("#greet").addEventListener("click", e => {
+    if (e.target.closest("#greetClose")) return hideGreet();
+    greetChrome(!$("#greet").classList.contains("chrome"));   // a tap shows or hides Close
+  });
+
+  let firstMedia = true;
+  function onMedia(json) {
+    try { mediaState = JSON.parse(json); } catch (e) { return; }
+    customers = mediaState.customers || [];
+    applyCustomer(customers.find(c => c.name === mediaState.customer) || null);
+    if (firstMedia) { firstMedia = false; if (customer) showGreet(); }
+    if ($("#admin").classList.contains("show") && $("#sheet .cust-list")) openCustomers(false);
+    const n = mediaState.items.length;
+    $("#mediaCount").textContent = mediaState.configured && !mediaState.error ? (n === 1 ? "1 file" : `${n} files`) : "";
+    if (state === "library") renderLibrary(false);
+  }
+
+  function openLibrary() {
+    if (state !== "home") return;
+    state = "library";
+    const t = $("#tiles [data-dest=library]");
+    t.classList.add("pressed");
+    renderLibrary(true);
+    $("#library").classList.add("open");
+    requestAnimationFrame(placeKnob);
+    requestMedia();
+    setTimeout(() => t.classList.remove("pressed"), 800);
+  }
+  function closeLibrary(instant) {
+    const lib = $("#library");
+    if (instant) { lib.style.transition = "none"; lib.classList.remove("open"); lib.offsetHeight; lib.style.transition = ""; }
+    else lib.classList.remove("open");
+    if (state === "library") state = "home";
+  }
+
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  function renderLibrary(animate) {
+    const body = $("#libBody"), m = mediaState;
+    $("#libFolder").textContent = m.folder ? `From the ${m.folder} folder` : "";
+    if (!m.configured) {
+      body.innerHTML = `<div class="empty"><h2>Choose a media folder</h2>
+        <p>Pick the folder on this display that holds your videos and PDFs. Everything in it, including subfolders, shows up here.</p>
+        <button class="btn" data-act="pick">Choose folder</button></div>`;
+      return;
+    }
+    if (m.error) {
+      body.innerHTML = `<div class="empty"><h2>The media list couldn't be loaded</h2>
+        <p>Check the display's internet connection, then tap Refresh.</p>
+        <button class="btn" data-act="refresh">Refresh</button></div>`;
+      return;
+    }
+    const items = m.items.filter(i => filter === "all" || i.type === filter);
+    if (!items.length) {
+      const what = filter === "video" ? "videos" : filter === "pdf" ? "PDFs" : "videos or PDFs";
+      body.innerHTML = `<div class="empty"><h2>No ${what} yet</h2>
+        <p>Upload MP4 videos or PDF files to the media folder in the GitHub project, then tap Refresh.</p>
+        <button class="btn ghost" data-act="refresh">Refresh</button></div>`;
+      return;
+    }
+    let html = `<div class="grid">`, lastFolder = null;
+    const grouped = new Set(items.map(i => i.folder)).size > 1;
+    for (const it of items) {
+      if (grouped && it.folder !== lastFolder) { html += `<div class="folder-label">${esc(it.folder || "Main folder")}</div>`; lastFolder = it.folder; }
+      const thumb = it.thumb ? `style="background-image:url('${esc(it.thumb)}')"` : "";
+      const blank = it.thumb ? "" : `<div class="blank"><svg viewBox="0 0 48 48"><use href="${it.type === "pdf" ? "#g-doc" : "#g-video"}"/></svg></div>`;
+      const play = it.type === "video" ? `<div class="play"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg></div>` : "";
+      html += `<button class="card ${it.type}" data-id="${esc(it.id)}">
+        <div class="thumb" ${thumb}>${blank}${play}<span class="badge">${it.type === "pdf" ? "PDF" : "Video"}</span></div>
+        <div class="info"><div class="name">${esc(it.name)}</div>${it.meta ? `<div class="sub">${esc(it.meta)}</div>` : ""}</div>
+      </button>`;
+    }
+    body.innerHTML = html + `</div>`;
+    if (animate && !reduceMotion) {
+      $$(".card, .folder-label", body).slice(0, 16).forEach((c, i) => c.animate(
+        [{ opacity: 0, transform: "translateY(4rem) scale(.97)" }, { opacity: 1, transform: "none" }],
+        { duration: 750, delay: 300 + i * 50, easing: EASE_OUT, fill: "backwards" }));
+    }
+  }
+
+  $("#libBody").addEventListener("click", e => {
+    const act = e.target.closest("[data-act]");
+    if (act) { if (act.dataset.act === "pick") K.pickMediaFolder(); else refresh(); return; }
+    const card = e.target.closest(".card");
+    if (!card || state !== "library") return;
+    const item = mediaState.items.find(i => i.id === card.dataset.id);
+    if (!item) return;
+    launch(card, { title: item.name, sub: item.type === "pdf" ? "Opening PDF" : "Starting video",
+      glyph: glyphs[item.type], go: () => K.openMedia(item.id) });
+  });
+  $("#libBack").addEventListener("click", () => closeLibrary(false));
+
+  function placeKnob() {
+    const on = $("#filters button.on"), knob = $("#filters .knob");
+    knob.style.width = on.offsetWidth + "px";
+    knob.style.transform = `translateX(${on.offsetLeft}px)`;
+  }
+  $("#filters").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    filter = b.dataset.f;
+    $$("#filters button").forEach(x => x.classList.toggle("on", x === b));
+    placeKnob(); renderLibrary(true);
+  });
+  function refresh() {
+    const r = $("#refresh"); r.classList.remove("spin"); r.offsetWidth; r.classList.add("spin");
+    if (K.refresh) K.refresh(); else requestMedia();
+  }
+  $("#refresh").addEventListener("click", refresh);
+
+  /* ================= Hidden settings: hold the wordmark for 3 seconds ================= */
+  let holdTimer;
+  const wm = $("#wordmark");
+  wm.addEventListener("pointerdown", () => { holdTimer = setTimeout(openPin, 3000); });
+  ["pointerup", "pointerleave", "pointercancel"].forEach(ev => wm.addEventListener(ev, () => clearTimeout(holdTimer)));
+
+  let pin = "";
+  function openPin() {
+    if (state !== "home") return;
+    pin = "";
+    $("#sheet").innerHTML = `<h2>Display settings</h2><p class="lead">Enter the PIN to continue.</p>
+      <div class="dots" id="dots">${"<i></i>".repeat(4)}</div>
+      <div class="keys">${[1,2,3,4,5,6,7,8,9].map(n => `<button data-k="${n}">${n}</button>`).join("")}
+        <button class="muted" data-k="cancel">Cancel</button><button data-k="0">0</button><button class="muted" data-k="del">Delete</button></div>`;
+    $("#admin").classList.add("show");
+  }
+  function closeAdmin() { $("#admin").classList.remove("show"); }
+  function openSettings() {
+    $("#sheet").innerHTML = `<h2>Display settings</h2><p class="lead">Changes apply right away.</p>
+      <div class="row"><div><div class="k">Customer</div><div class="v">${esc(customer ? customer.name : "None (standard display)")}</div></div>
+        <button class="btn ghost" data-a="customer">Change</button></div>
+      <div class="row"><div><div class="k">Content</div><div class="v">${esc(K.contentSummary ? K.contentSummary() : "")}</div></div>
+        <button class="btn ghost" data-a="reload-content">Refresh</button></div>
+      <div class="row"><div><div class="k">Full screen</div><div class="v">Hides Chrome's address bar on this display.</div></div>
+        <button class="btn ghost" data-a="fullscreen">Turn on</button></div>
+      <div class="foot"><span>Version ${esc(K.appVersion())}</span><button class="btn" data-a="close">Done</button></div>`;
+  }
+  function openCustomers(refresh = true) {
+    if (refresh) requestMedia();   // pick up folders added since the last scan
+    const rows = customers.map(c => `<button class="cust ${customer && customer.name === c.name ? "on" : ""}" data-cust="${esc(c.name)}">
+        <span class="mini">${plateHTML(c)}</span><span>${esc(c.name)}</span><span class="tick"></span></button>`).join("");
+    const empty = customers.length ? "" : `<p class="cust-empty">No customers yet. In the GitHub project, add a folder named <code>customers</code>,
+        then one folder per customer named the way it should appear on screen, with their logo inside.</p>`;
+    $("#sheet").innerHTML = `<h2>Customer</h2><p class="lead">The display opens on a full-screen welcome for the customer you choose. Tap it, then Close, to reach the menu.</p>
+      <div class="cust-list">
+        <button class="cust ${customer ? "" : "on"}" data-cust=""><span class="mini none">No logo</span><span>None (standard display)</span><span class="tick"></span></button>
+        ${rows}</div>${empty}
+      <div class="foot"><button class="btn ghost" data-a="back">Back</button><button class="btn" data-a="close">Done</button></div>`;
+  }
+
+  $("#admin").addEventListener("click", e => {
+    if (e.target.id === "admin") return closeAdmin();
+    const cu = e.target.closest("[data-cust]");
+    if (cu) {
+      const name = cu.dataset.cust;
+      K.setCustomer(name);
+      applyCustomer(customers.find(c => c.name === name) || null);
+      $$(".cust", $("#sheet")).forEach(b => b.classList.toggle("on", b === cu));
+      if (customer) setTimeout(() => { closeAdmin(); showGreet(); }, 350);
+      return;
+    }
+    const k = e.target.closest("[data-k]");
+    if (k) {
+      const v = k.dataset.k;
+      if (v === "cancel") return closeAdmin();
+      if (v === "del") pin = pin.slice(0, -1); else if (pin.length < 4) pin += v;
+      $$("#dots i").forEach((d, i) => d.classList.toggle("on", i < pin.length));
+      if (pin.length === 4) {
+        if (K.checkPin(pin)) setTimeout(openSettings, 150);
+        else {
+          const dots = $("#dots"); dots.classList.remove("bad"); dots.offsetWidth; dots.classList.add("bad");
+          pin = ""; setTimeout(() => $$("#dots i").forEach(d => d.classList.remove("on")), 350);
+        }
+      }
+      return;
+    }
+    const a = e.target.closest("[data-a]"); if (!a) return;
+    switch (a.dataset.a) {
+      case "folder": closeAdmin(); K.pickMediaFolder(); break;
+      case "pin": { const on = !a.classList.contains("on"); a.classList.toggle("on", on); K.setPinned(on); break; }
+      case "system": closeAdmin(); K.openSystemSettings(); break;
+      case "close": closeAdmin(); break;
+      case "customer": openCustomers(); break;
+      case "back": openSettings(); break;
+      case "reload-content": if (K.refresh) K.refresh(); setTimeout(openSettings, 1500); break;
+      case "fullscreen": if (K.fullscreen) K.fullscreen(); closeAdmin(); break;
+    }
+  });
+
+  /* ================= Hooks the app calls ================= */
+  window.KioskUI = {
+    onMedia,
+    onReturn: fromIdle => onReturn(!!fromIdle),
+    onIdle() { closeAdmin(); if (state === "library") closeLibrary(false); if (customer) showGreet(); },
+    onBack() { if ($("#admin").classList.contains("show")) return closeAdmin(); if (state === "greet") return; if (state === "library") closeLibrary(false); },
+  };
+  document.addEventListener("visibilitychange", () => { if (document.hidden) running = false; else startSpin(); });
+  requestMedia();
+})();
+</script>
+</body>
+</html>
